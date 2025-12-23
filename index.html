@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiliLeaks Database</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'IBM Plex Serif', Georgia, serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -10%;
+            left: -10%;
+            width: 120%;
+            height: 120%;
+            background: 
+                radial-gradient(circle at 25% 35%, rgba(70, 70, 70, 0.25) 0%, transparent 40%),
+                radial-gradient(ellipse at 75% 65%, rgba(65, 65, 65, 0.22) 0%, transparent 45%),
+                radial-gradient(circle at 50% 80%, rgba(60, 60, 60, 0.18) 0%, transparent 50%),
+                radial-gradient(ellipse at 10% 70%, rgba(68, 68, 68, 0.15) 0%, transparent 40%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            border-bottom: 2px solid #404040;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #ffffff;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 700;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+        }
+
+        .subtitle {
+            font-size: 0.9em;
+            color: #909090;
+            letter-spacing: 1px;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .doc-button {
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+            border: 2px solid #404040;
+            padding: 15px 30px;
+            font-family: 'IBM Plex Serif', Georgia, serif;
+            font-size: 1em;
+            font-weight: 600;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .doc-button:hover {
+            background-color: #353535;
+            border-color: #606060;
+        }
+
+        .doc-button.active {
+            background-color: #404040;
+            border-color: #808080;
+            color: #ffffff;
+        }
+
+        .document-viewer {
+            background-color: #2a2a2a;
+            border: 1px solid #404040;
+            padding: 0;
+            height: 0;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            opacity: 0;
+            transition: height 0.4s ease, opacity 0.3s ease;
+        }
+
+        .document-viewer.visible {
+            height: 70vh;
+            opacity: 1;
+            overflow-y: scroll;
+        }
+
+        .document-viewer::-webkit-scrollbar {
+            display: none;
+        }
+
+        .document-content {
+            background-color: #f5f5f5;
+            color: #000000;
+            padding: 60px 80px;
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+        }
+
+        .doc-header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .doc-header h2 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .classification {
+            color: #cc0000;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+
+        .doc-info {
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .doc-section {
+            margin-bottom: 25px;
+        }
+
+        .doc-section h3 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            text-decoration: underline;
+        }
+
+        .page-break {
+            border-top: 2px dashed #999;
+            margin: 40px 0;
+            padding-top: 40px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #909090;
+            color: #909090;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><img src="https://files.catbox.moe/rs1pff.png" alt="MiliLeaks" class="logo">MiliLeaks</h1>
+            <div class="subtitle">Peregrine International - Military Engagement - 01 June, 2173 - Operation Eiffel - Section 02</div>
+        </header>
+
+        <div class="button-container">
+            <button class="doc-button" onclick="toggleDocument('memo')">Internal Memo</button>
+            <button class="doc-button" onclick="toggleDocument('combat')">Combat Log</button>
+        </div>
+
+        <div class="document-viewer" id="memoDoc">
+            <div class="document-content">
+                <div style="position: relative; display: flex; margin-bottom: 20px;">
+    <img src="https://files.catbox.moe/a1eiut.png" alt="Peregrine" style="width: 120px; height: 120px;">
+    <div style="position: absolute; left: 50%; transform: translateX(-50%);">
+        <div class="classification">Classified Document - Level 3 Clearance</div>
+    </div>
+</div>
+
+
+           <div class="doc-header" style="border: none; padding-bottom: 10px; text-align: center;">
+    <h2>Operation Outline</h2>
+    <div class="doc-info">
+        <strong>Operation Reference</strong>: EIFFEL-02<br>
+        <strong>Date</strong>: June 01, 2173<br>
+        <strong>Division</strong>: France Special Operative Branch<br>
+        <strong>Document ID</strong>: 875-FAS-000-EIFFEL-RX1<br>
+        <strong>Employer</strong>: Nestlé Corporation
+    </div>
+</div>
+
+
+                <hr style="border: none; border-top: 1px solid #000; margin: 20px 0;">
+
+                <div class="doc-section">
+                    <h3>Overview:</h3>
+                    <p style="text-indent: 2em;">This document provides the overview and strategic mission outline for Operation EIFFEL-02, a special private-sector security operation to be undertaken by Peregrine International. 02 is part of OPERATION EIFFEL, a larger scale operation being undertaken within France. The scope of this mission is to be contained within the France Special Operative Branch and the mission to be conducted within the Administrative Regions of Paris and New Paris.</p>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid #000; margin: 20px 0;">
+
+                <div class="doc-section">
+                    <h3>Specifications:</h3>
+                    <p style="text-indent: 2em;">This mission is classified as a Type-5 targeted security operation.</p>
+                    <p style="text-indent: 2em;">Personnel are to be advised that under European Corporate Regulations, collateral damage will not be tolerated beyond the scope of ten civilian casualties or $30 million in non-target damages. Peregrine International is committed to limiting harm to private citizens in pursuit of serving its employers.</p>
+                    <p style="text-indent: 2em;">The Nestlé Corporation has specified that this operation is to remain detached from their brand name. As such, Operation EIFFEL-02 will utilize compartmentalized data and information structures. Only commanding officers will be informed as to the nature of the employer for this operation. Copies of this document distributed to lower-ranked personnel are to contain redactions of all mentions of the Nestlé Corporation, alongside any information that may trace to them.</p>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid #000; margin: 20px 0;">
+
+                <div class="doc-section">
+                    <h3>Objective:</h3>
+                    <p style="text-indent: 2em;">The objective of Operation EIFFEL-02 is the destruction of three Panard owned factories located on the outer sectors of the Paris and New Paris Joint Administrative Region. The employer has specified that these three food-manufacturing facilities must be destroyed as to be unsalvageable.</p>
+                    <p style="text-indent: 2em;">The employer has requested that casualties be limited. As such, strikes are to be conducted at night, before the workday begins, to ensure the lowest death-toll. The specific methods through which these three manufacturing factories will be destroyed is to be left to the commanding officers in charge of the operation. Higher command has however recommended the usage of high power explosives alongside chemical agents to contaminate the remaining rubble.</p>
+                    <p style="text-indent: 2em;">It is to be noted that these factories are guarded at all times by autonomous security drones, alongside private security staff. The employer has stated that the deaths of private security staff are of no concern.</p>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid #000; margin: 20px 0;">
+
+          
+
+                <div class="doc-section">
+                    <h3>Operatives:</h3>
+                    <p style="text-indent: 2em;">Operation EIFFEL-02 is to be undertaken by the following Peregrine Assets:</p>
+                    <p style="margin-left: 2em;">Alpha Team: 24 Operatives</p>
+                    <p style="margin-left: 2em;">Bravo Team: 21 Operatives  </p>
+                    <p style="margin-left: 2em;">Charlie Team: 19 Operatives (Security Assistance)</p>
+                    <p style="margin-left: 2em;">Aerial Support: 2 Fighter Craft, 3 Transport, 1 Overwatch, 8 Support Drones</p>
+                    <p style="margin-left: 2em;">Command: 4 Personnel, 1 Tactical Support Platform</p>
+                    <p style="margin-left: 2em;">Medical Staff: 3 Personnel</p>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid #000; margin: 20px 0;">
+
+                <div class="doc-section">
+                    <h3>Intelligence:</h3>
+                    <p style="text-indent: 2em;">Intelligence and surveillance states that each factory possesses a security team of approximately 8 personnel, alongside four groupings of Stokkman standard security drones. The personnel are believed to be contractors from Meridian.</p>
+                    <p style="text-indent: 2em;">On the first Monday of each month, at midnight, the drones are temporarily shut down for maintenance. The strikes should be conducted during this window.</p>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid #000; margin: 20px 0;">
+
+                <div class="doc-section">
+                    <h3>Rules of Engagement:</h3>
+                    <p style="text-indent: 2em;">Peregrine assets are to employ necessary force, under regulations 4 and 5 of the engagement handbook. If Peregrine assets encounter resistance, lethal force is sanctioned. Peregrine assets should first administer visible warnings to on-site security before commencing executions. These warnings must comply with the United Nations regulations on military engagement.</p>
+                </div>
+
+                <div style="margin-top: 50px; text-align: center; font-size: 0.9em;">
+                    END OF DOCUMENT
+                </div>
+            </div>
+        </div>
+
+         <div class="document-viewer" id="combatDoc">
+    <div class="document-content">
+
+        <div style="position: relative; display: flex; margin-bottom: 20px;">
+            <img src="https://files.catbox.moe/a1eiut.png"
+                 alt="Peregrine"
+                 style="width: 120px; height: 120px;">
+            <div style="position: absolute; left: 50%; transform: translateX(-50%);">
+                <div class="classification">Classified Document - Level 4 Clearance </div>
+            </div>
+        </div>
+
+       <div class="doc-header" style="text-align: center;">
+    <h2>Mission Log - EIFFEL-02</h2>
+    <div class="doc-info" style="display: inline-block; text-align: center;">
+        <strong>Operation Reference:</strong> EIFFEL-02<br>
+        <strong>Date:</strong> June 01, 2173<br>
+        <strong>Log Officer:</strong> Agent Mariah Jaldikh, Local Command Staff<br>
+        <strong>Division:</strong> France Special Operative Branch<br>
+        <strong>Document ID:</strong> 084-FAS-001-EIFFEL-CL
+    </div>
+</div>
+
+
+
+                <div class="doc-section">
+                    <h3>2321 HRS - Commence Operations</h3>
+                    <p>	All teams enter positions and begin Operation EIFFEL. Transports AZ-1 AZ-2 and AZ-3 touchdown. Command staff establish network. Aerial position secured.</p>
+                </div>
+
+                <div class="doc-section">
+                    <h3>2345 HRS - Triple Perimeter Established</h3>
+                    <p>	Aerial control established. All sites contained within perimeter. Thermal readings confirm 9 active on Site 1, 7 active on Site 2, 7 active on Site 3. Assault teams move into position. Local surveillance shutdown. Transmissions cage established around all sites. </p>
+                </div>
+
+                <div class="doc-section">
+                    <h3>2357 HRS - Commence Operation</h3>
+                    <p>Drones enter sites. Drone 6 suffers rotor failure from undetected air-vent trap. On site security for Site 1 alerted. Sites 2 and 3 remain silent. Aerial support notes Site 1 transmissions cage suffering attacks from local security. Suspected hacking-specialized agent on Site 1.</p>
+                </div>
+
+                <div class="doc-section">
+                    <h3>0013 HRS - Insertion of Operatives</h3>
+                    <p>Operatives are inserted into sites. Site 1 transmissions cage loses frontal form and firewall. Command staff focuses on maintaining cage.</p>
+                </div>
+
+                <div class="doc-section">
+                    <h3>0016 HRS - Hostile Contact: Site 1</h3>
+                    <p>Alpha Team suffers ambush. Minor damage to Alpha-2, low calibre gunshot to the arm. Alpha Team commences firefight with local security.</p>
+                </div>
+
+                <div class="doc-section">
+                    <h3>0021 HRS - Hostile Contact: Sites 2 and 3</h3>
+                    <p>Bravo and Charlie teams perform successful attacks on security staff. Security staff ambushed and overwhelmed.</p>
+                </div>
+
+                <div class="doc-section">
+                    <h3>0022 HRS - Sites 2 and 3 Clear</h3>
+                    <p>Sites 2 and 3 local security neutralized. Bravo and Charlie teams commence deployment of explosives and chemical agents. Site 1 Security Staff transmits short range SOS through a crack in transmissions cage.</p>
+                </div>
+
+                <div class="doc-section">
+                    <h3>0028 HRS - Site 1 Clear</h3>
+                    <p>Site 1 security neutralized. Alpha team commences deployment of explosives and chemical agents.</p>
+                </div>
+
+                <div class="doc-section">
+                    <h3>0037 HRS - Objective Achieved</h3>
+                    <p>	All sites cleared and detonated. Chemical agents and contaminants active on sites. Biohazard achieved. Commencing extraction.</p>
+                </div>
+
+                <div class="doc-section">
+                    <h3>0038 HRS - Hostile Contact: Site 1</h3>
+                    <p>Hostile contact with unknown Wielder on site 1.</p>
+                </div>
+
+                  <div class="doc-section">
+                    <h3>0043 HRS - Alpha Team KIA</h3>
+                    <p>Bravo and Charlie teams extracted.</p>
+                </div>
+
+                <div class="doc-section">
+                    <h3>0048HRS - Bravo and Charlie Extraction Confirmed</h3>
+                    <p>Alpha Team KIA after engagement with unknown Wielder. Aerial support logged high surges of Abstract Energy. Ground transmissions seem to show Wielder utilizing a form of plant manipulation.</p>
+                </div>
+
+                <div class="doc-section">
+                    <h3>0135HRS - Casualty Report</h3>
+                    <p><strong>Total Engagements:</strong> 4 direct combat incidents<br>
+                    <strong>Peregrine Casualties:</strong> 24 KIA, 1 major injury, 4 minor injury (non-combat effective status: 0)<br>
+                    <strong>Hostile Casualties:</strong> 23 KIA<br>
+                    <strong>Mission Status:</strong> OBJECTIVES ACHIEVED </p>
+                </div>
+
+                <div style="margin-top: 50px; text-align: center; font-size: 0.9em;">
+                    END OF MISSION LOG
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            MiliLeaks Database v5.3.2 | Standard Content | Activity is logged
+        </footer>
+    </div>
+
+    <script>
+        let currentDoc = null;
+
+        function toggleDocument(docType) {
+            const memoDoc = document.getElementById('memoDoc');
+            const combatDoc = document.getElementById('combatDoc');
+            const buttons = document.querySelectorAll('.doc-button');
+
+            if (docType === 'memo') {
+                if (currentDoc === 'memo') {
+                    memoDoc.classList.remove('visible');
+                    buttons[0].classList.remove('active');
+                    currentDoc = null;
+                } else {
+                    memoDoc.classList.add('visible');
+                    combatDoc.classList.remove('visible');
+                    buttons[0].classList.add('active');
+                    buttons[1].classList.remove('active');
+                    currentDoc = 'memo';
+                }
+            } else if (docType === 'combat') {
+                if (currentDoc === 'combat') {
+                    combatDoc.classList.remove('visible');
+                    buttons[1].classList.remove('active');
+                    currentDoc = null;
+                } else {
+                    combatDoc.classList.add('visible');
+                    memoDoc.classList.remove('visible');
+                    buttons[1].classList.add('active');
+                    buttons[0].classList.remove('active');
+                    currentDoc = 'combat';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
